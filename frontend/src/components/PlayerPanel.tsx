@@ -1,0 +1,92 @@
+import { UserPlus } from "lucide-react";
+import { FormEvent, useState } from "react";
+
+import type { PlayerProfile, PlayerRank } from "../api/client";
+
+type Props = {
+  player: PlayerProfile | null;
+  rank: PlayerRank | null;
+  onCreate: (nick: string, avatar: string) => Promise<void>;
+};
+
+const avatars = ["rocket", "bolt", "star", "diamond"];
+
+export function PlayerPanel({ player, rank, onCreate }: Props) {
+  const [nick, setNick] = useState("");
+  const [avatar, setAvatar] = useState(avatars[0]);
+  const [creating, setCreating] = useState(false);
+
+  async function handleSubmit(event: FormEvent) {
+    event.preventDefault();
+    if (!nick.trim()) return;
+    setCreating(true);
+    try {
+      await onCreate(nick.trim(), avatar);
+      setNick("");
+    } finally {
+      setCreating(false);
+    }
+  }
+
+  return (
+    <section className="panel">
+      <div className="panelHeader">
+        <div className="panelTitle">
+          <UserPlus size={18} aria-hidden="true" />
+          <h2>Gracz</h2>
+        </div>
+      </div>
+
+      <form className="playerForm" onSubmit={handleSubmit}>
+        <input
+          value={nick}
+          onChange={(event) => setNick(event.target.value)}
+          placeholder="Nick"
+          minLength={2}
+          maxLength={32}
+        />
+        <select value={avatar} onChange={(event) => setAvatar(event.target.value)}>
+          {avatars.map((item) => (
+            <option key={item} value={item}>
+              {item}
+            </option>
+          ))}
+        </select>
+        <button className="primaryButton" disabled={creating || !nick.trim()}>
+          <UserPlus size={16} aria-hidden="true" />
+          Utwórz
+        </button>
+      </form>
+
+      {player ? (
+        <div className="profileStats">
+          <div>
+            <span className="muted">Nick</span>
+            <strong>{player.nick}</strong>
+          </div>
+          <div>
+            <span className="muted">Punkty</span>
+            <strong>{player.totalScore}</strong>
+          </div>
+          <div>
+            <span className="muted">Globalnie</span>
+            <strong>{rank?.globalRank ? `#${rank.globalRank}` : "-"}</strong>
+          </div>
+          <div>
+            <span className="muted">Tydzień</span>
+            <strong>{rank?.weeklyRank ? `#${rank.weeklyRank}` : "-"}</strong>
+          </div>
+          <div>
+            <span className="muted">Poprawne</span>
+            <strong>{player.correctAnswers}</strong>
+          </div>
+          <div>
+            <span className="muted">Błędne</span>
+            <strong>{player.wrongAnswers}</strong>
+          </div>
+        </div>
+      ) : null}
+    </section>
+  );
+}
+
