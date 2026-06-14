@@ -43,34 +43,36 @@ async def add_score(
     await get_quiz_summary(redis, quiz_id)
     week_key = current_week_key(quiz_id=quiz_id)
 
+    pipe = redis.pipeline()
     if points > 0:
-        pipe = redis.pipeline()
         pipe.zincrby(global_leaderboard_key(quiz_id), points, player_id)
         pipe.zincrby(week_key, points, player_id)
-        await pipe.execute()
-        await ensure_weekly_ttl(redis, week_key)
+    else:
+        pipe.zadd(global_leaderboard_key(quiz_id), {player_id: 0}, nx=True)
+        pipe.zadd(week_key, {player_id: 0}, nx=True)
+    await pipe.execute()
+    await ensure_weekly_ttl(redis, week_key)
 
     rank = await get_player_rank(redis, player_id, quiz_id=quiz_id)
 
-    if points > 0:
-        profile = await get_player(redis, player_id)
-        event = {
-            "type": "leaderboard.score.updated",
-            "quizId": quiz_id,
-            "player": {
-                "id": profile.id,
-                "nick": profile.nick,
-                "avatar": profile.avatar,
-            },
-            "pointsDelta": points,
-            "globalScore": rank.globalScore,
-            "globalRank": rank.globalRank,
-            "weeklyScore": rank.weeklyScore,
-            "weeklyRank": rank.weeklyRank,
-            "weekKey": rank.weekKey,
-            "updatedAt": datetime.now(UTC).isoformat(),
-        }
-        await redis.publish(UPDATES_CHANNEL, json.dumps(event))
+    profile = await get_player(redis, player_id)
+    event = {
+        "type": "leaderboard.score.updated",
+        "quizId": quiz_id,
+        "player": {
+            "id": profile.id,
+            "nick": profile.nick,
+            "avatar": profile.avatar,
+        },
+        "pointsDelta": points,
+        "globalScore": rank.globalScore,
+        "globalRank": rank.globalRank,
+        "weeklyScore": rank.weeklyScore,
+        "weeklyRank": rank.weeklyRank,
+        "weekKey": rank.weekKey,
+        "updatedAt": datetime.now(UTC).isoformat(),
+    }
+    await redis.publish(UPDATES_CHANNEL, json.dumps(event))
 
     return rank
 

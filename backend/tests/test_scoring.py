@@ -57,5 +57,7 @@ async def test_player_cannot_change_wrong_answer_to_score_points() -> None:
     assert profile.correctAnswers == 0
     assert profile.wrongAnswers == 1
     assert profile.totalScore == 0
-    assert await redis.zscore(GLOBAL_LEADERBOARD_KEY, player.id) is None
+    assert await redis.zscore(GLOBAL_LEADERBOARD_KEY, player.id) == 0
+    assert first_result.rank.globalRank == 1
+    assert first_result.rank.globalScore == 0
     await redis.aclose()

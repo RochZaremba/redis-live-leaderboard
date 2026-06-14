@@ -5,7 +5,7 @@ from redis.asyncio import Redis
 
 from app.common.errors import ConflictError
 from app.game.schemas import AnswerRequest, AnswerResult, QuestionOut
-from app.leaderboard.service import add_score, get_player_rank
+from app.leaderboard.service import add_score
 from app.players.service import (
     answered_questions_key,
     game_history_key,
@@ -85,11 +85,7 @@ async def answer_question(
     pipe.expire(game_history_key(payload.playerId, quiz_id), GAME_HISTORY_TTL_SECONDS)
     await pipe.execute()
 
-    rank = (
-        await add_score(redis, payload.playerId, points, quiz_id=quiz_id)
-        if points > 0
-        else await get_player_rank(redis, payload.playerId, quiz_id=quiz_id)
-    )
+    rank = await add_score(redis, payload.playerId, points, quiz_id=quiz_id)
 
     return AnswerResult(
         quizId=quiz_id,

@@ -28,6 +28,36 @@ async def test_add_score_updates_global_and_weekly_leaderboards() -> None:
 
 
 @pytest.mark.asyncio
+async def test_add_score_includes_zero_point_players() -> None:
+    redis = FakeRedis(decode_responses=True)
+    player = await create_player(redis, PlayerCreate(nick="Zero", avatar="bolt"))
+
+    rank = await add_score(redis, player.id, 0)
+
+    assert rank.globalRank == 1
+    assert rank.globalScore == 0
+    assert await redis.zscore(GLOBAL_LEADERBOARD_KEY, player.id) == 0
+    assert await redis.zscore(current_week_key(), player.id) == 0
+    assert await redis.ttl(current_week_key()) > 0
+    await redis.aclose()
+
+
+@pytest.mark.asyncio
+async def test_zero_point_score_does_not_overwrite_existing_score() -> None:
+    redis = FakeRedis(decode_responses=True)
+    player = await create_player(redis, PlayerCreate(nick="Scored", avatar="star"))
+
+    await add_score(redis, player.id, 100)
+    rank = await add_score(redis, player.id, 0)
+
+    assert rank.globalRank == 1
+    assert rank.globalScore == 100
+    assert await redis.zscore(GLOBAL_LEADERBOARD_KEY, player.id) == 100
+    assert await redis.zscore(current_week_key(), player.id) == 100
+    await redis.aclose()
+
+
+@pytest.mark.asyncio
 async def test_leaderboard_returns_players_in_score_order() -> None:
     redis = FakeRedis(decode_responses=True)
     first = await create_player(redis, PlayerCreate(nick="First", avatar="star"))
@@ -53,4 +83,3 @@ async def test_player_without_score_has_no_rank() -> None:
     assert rank.globalRank is None
     assert rank.globalScore == 0
     await redis.aclose()
-
