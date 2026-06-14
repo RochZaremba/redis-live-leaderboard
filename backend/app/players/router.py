@@ -47,6 +47,32 @@ async def get_player_answers_endpoint(
     redis: RedisDep,
 ) -> PlayerAnswersResponse:
     return PlayerAnswersResponse(
+        quizId="default",
         playerId=player_id,
         answeredQuestionIds=await get_answered_question_ids(redis, player_id),
+    )
+
+
+@router.get("/{player_id}/quizzes/{quiz_id}/rank", response_model=PlayerRankResponse)
+async def get_player_quiz_rank_endpoint(
+    player_id: str,
+    quiz_id: str,
+    redis: RedisDep,
+) -> PlayerRankResponse:
+    return await get_player_rank(redis, player_id, quiz_id=quiz_id)
+
+
+@router.get(
+    "/{player_id}/quizzes/{quiz_id}/answers",
+    response_model=PlayerAnswersResponse,
+)
+async def get_player_quiz_answers_endpoint(
+    player_id: str,
+    quiz_id: str,
+    redis: RedisDep,
+) -> PlayerAnswersResponse:
+    return PlayerAnswersResponse(
+        quizId=quiz_id,
+        playerId=player_id,
+        answeredQuestionIds=await get_answered_question_ids(redis, player_id, quiz_id),
     )

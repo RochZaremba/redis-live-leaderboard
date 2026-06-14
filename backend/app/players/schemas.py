@@ -17,6 +17,7 @@ class PlayerProfile(BaseModel):
 
 
 class PlayerRankResponse(BaseModel):
+    quizId: str = "default"
     playerId: str
     globalRank: int | None
     globalScore: int
@@ -26,5 +27,6 @@ class PlayerRankResponse(BaseModel):
 
 
 class PlayerAnswersResponse(BaseModel):
+    quizId: str = "default"
     playerId: str
     answeredQuestionIds: list[str]

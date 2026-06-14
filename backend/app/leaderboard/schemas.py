@@ -10,7 +10,7 @@ class LeaderboardEntry(BaseModel):
 
 
 class LeaderboardResponse(BaseModel):
+    quizId: str = "default"
     scope: str
     weekKey: str | None = None
     entries: list[LeaderboardEntry]
-

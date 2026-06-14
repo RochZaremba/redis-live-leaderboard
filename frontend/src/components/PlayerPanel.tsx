@@ -66,7 +66,7 @@ export function PlayerPanel({ player, rank, onCreate }: Props) {
           </div>
           <div>
             <span className="muted">Punkty</span>
-            <strong>{player.totalScore}</strong>
+            <strong>{rank?.globalScore ?? player.totalScore}</strong>
           </div>
           <div>
             <span className="muted">Globalnie</span>
@@ -89,4 +89,3 @@ export function PlayerPanel({ player, rank, onCreate }: Props) {
     </section>
   );
 }
-

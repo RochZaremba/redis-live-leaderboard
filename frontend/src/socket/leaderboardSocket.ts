@@ -2,6 +2,7 @@ import { API_BASE } from "../api/client";
 
 export type LeaderboardSocketEvent = {
   type: string;
+  quizId?: string;
   player?: {
     id: string;
     nick: string;
@@ -40,4 +41,3 @@ export function connectLeaderboardSocket(
 
   return socket;
 }
-

@@ -8,7 +8,10 @@ type Props = {
   questions: Question[];
   disabled: boolean;
   onAnswer: (questionId: string, answer: string) => Promise<AnswerResult>;
+  onComplete: () => void;
   playerId: string | null;
+  quizId: string;
+  quizTitle: string;
 };
 
 function firstUnansweredIndex(questions: Question[], answeredIds: Set<string>) {
@@ -21,7 +24,10 @@ export function QuestionCard({
   questions,
   disabled,
   onAnswer,
+  onComplete,
   playerId,
+  quizId,
+  quizTitle,
 }: Props) {
   const [questionIndex, setQuestionIndex] = useState(0);
   const [selected, setSelected] = useState("");
@@ -51,7 +57,7 @@ export function QuestionCard({
         questions.every((item) => answeredIds.has(item.id)),
     );
     setQuestionIndex(firstUnansweredIndex(questions, answeredIds));
-  }, [answeredIds, playerId, questions, result, submitting]);
+  }, [answeredIds, playerId, questions, quizId, result, submitting]);
 
   const question = questions[questionIndex];
   const answeredCurrentQuestion = question ? answeredIds.has(question.id) : false;
@@ -90,6 +96,7 @@ export function QuestionCard({
 
     if (remainingQuestionIndex === -1) {
       setCompleted(true);
+      onComplete();
       return;
     }
 
@@ -114,8 +121,8 @@ export function QuestionCard({
           </div>
         </div>
         <div className="quizComplete">
-          Odpowiedziano na {answeredQuestionCount}/
-          {questions.length} pytań. Użyj Reset, jeśli chcesz wyczyścić demo i zacząć od nowa.
+          Odpowiedziano na {answeredQuestionCount}/{questions.length} pytań.
+          Przechodzę do podsumowania wyniku.
         </div>
       </section>
     );
@@ -125,7 +132,9 @@ export function QuestionCard({
     <section className="panel quizPanel">
       <div className="panelHeader">
         <div>
-          <span className="muted">Pytanie {questionIndex + 1}/{questions.length}</span>
+          <span className="muted">
+            {quizTitle} - Pytanie {questionIndex + 1}/{questions.length}
+          </span>
           <h2>{question.text}</h2>
         </div>
       </div>
@@ -153,9 +162,7 @@ export function QuestionCard({
             <XCircle size={18} aria-hidden="true" />
           )}
           <div>
-            <strong>
-              {result.correct ? `+${result.pointsAwarded} pkt` : "0 pkt"}
-            </strong>
+            <strong>{result.correct ? "Dobra odpowiedź" : "Błędna odpowiedź"}</strong>
             <span>{result.explanation}</span>
           </div>
           <button className="ghostButton" onClick={nextQuestion} type="button">

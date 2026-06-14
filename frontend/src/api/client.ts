@@ -9,6 +9,7 @@ export type PlayerProfile = {
 };
 
 export type PlayerRank = {
+  quizId: string;
   playerId: string;
   globalRank: number | null;
   globalScore: number;
@@ -18,6 +19,7 @@ export type PlayerRank = {
 };
 
 export type PlayerAnswers = {
+  quizId: string;
   playerId: string;
   answeredQuestionIds: string[];
 };
@@ -47,9 +49,36 @@ export type LeaderboardEntry = {
 };
 
 export type LeaderboardResponse = {
+  quizId: string;
   scope: string;
   weekKey?: string | null;
   entries: LeaderboardEntry[];
+};
+
+export type QuizSummary = {
+  id: string;
+  title: string;
+  description: string;
+  questionCount: number;
+  createdAt: string;
+  isDefault: boolean;
+};
+
+export type QuizQuestionCreate = {
+  text: string;
+  options: string[];
+  correctOptionIndex: number;
+  explanation: string;
+};
+
+export type QuizCreate = {
+  title: string;
+  description: string;
+  questions: QuizQuestionCreate[];
+};
+
+export type QuizDetail = QuizSummary & {
+  questions: Question[];
 };
 
 export const API_BASE =
@@ -86,35 +115,53 @@ export function getPlayer(playerId: string) {
   return request<PlayerProfile>(`/api/players/${playerId}`);
 }
 
-export function getPlayerRank(playerId: string) {
-  return request<PlayerRank>(`/api/players/${playerId}/rank`);
+export function getPlayerRank(playerId: string, quizId = "default") {
+  return request<PlayerRank>(`/api/players/${playerId}/quizzes/${quizId}/rank`);
 }
 
-export function getPlayerAnswers(playerId: string) {
-  return request<PlayerAnswers>(`/api/players/${playerId}/answers`);
+export function getPlayerAnswers(playerId: string, quizId = "default") {
+  return request<PlayerAnswers>(
+    `/api/players/${playerId}/quizzes/${quizId}/answers`,
+  );
 }
 
-export function getQuestions() {
-  return request<Question[]>("/api/questions");
+export function getQuizzes() {
+  return request<QuizSummary[]>("/api/quizzes");
+}
+
+export function createQuiz(payload: QuizCreate) {
+  return request<QuizDetail>("/api/quizzes", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function getQuestions(quizId = "default") {
+  return request<Question[]>(`/api/quizzes/${quizId}/questions`);
 }
 
 export function submitAnswer(
+  quizId: string,
   playerId: string,
   questionId: string,
   answer: string,
 ) {
-  return request<AnswerResult>("/api/game/answer", {
+  return request<AnswerResult>(`/api/quizzes/${quizId}/answer`, {
     method: "POST",
-    body: JSON.stringify({ playerId, questionId, answer }),
+    body: JSON.stringify({ quizId, playerId, questionId, answer }),
   });
 }
 
-export function getGlobalLeaderboard(limit = 10) {
-  return request<LeaderboardResponse>(`/api/leaderboard/global?limit=${limit}`);
+export function getGlobalLeaderboard(limit = 10, quizId = "default") {
+  return request<LeaderboardResponse>(
+    `/api/quizzes/${quizId}/leaderboard/global?limit=${limit}`,
+  );
 }
 
-export function getWeeklyLeaderboard(limit = 10) {
-  return request<LeaderboardResponse>(`/api/leaderboard/weekly?limit=${limit}`);
+export function getWeeklyLeaderboard(limit = 10, quizId = "default") {
+  return request<LeaderboardResponse>(
+    `/api/quizzes/${quizId}/leaderboard/weekly?limit=${limit}`,
+  );
 }
 
 export function seedDemo() {

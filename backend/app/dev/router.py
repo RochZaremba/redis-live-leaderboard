@@ -7,12 +7,13 @@ from redis.asyncio import Redis
 
 from app.core.redis_client import get_redis
 from app.leaderboard.service import (
-    GLOBAL_LEADERBOARD_KEY,
     UPDATES_CHANNEL,
     current_week_key,
     ensure_weekly_ttl,
+    global_leaderboard_key,
 )
 from app.players.service import player_key
+from app.quizzes.service import DEFAULT_QUIZ_ID
 
 router = APIRouter(prefix="/dev", tags=["dev"])
 RedisDep = Annotated[Redis, Depends(get_redis)]
@@ -75,7 +76,8 @@ async def reset(redis: RedisDep) -> dict:
 @router.post("/seed")
 async def seed(redis: RedisDep) -> dict:
     await reset(redis)
-    week_key = current_week_key()
+    week_key = current_week_key(quiz_id=DEFAULT_QUIZ_ID)
+    global_key = global_leaderboard_key(DEFAULT_QUIZ_ID)
 
     for player in DEMO_PLAYERS:
         await redis.hset(
@@ -90,7 +92,7 @@ async def seed(redis: RedisDep) -> dict:
                 "totalScore": player["score"],
             },
         )
-        await redis.zadd(GLOBAL_LEADERBOARD_KEY, {player["id"]: player["score"]})
+        await redis.zadd(global_key, {player["id"]: player["score"]})
         await redis.zadd(week_key, {player["id"]: player["score"]})
 
     await ensure_weekly_ttl(redis, week_key)
@@ -99,6 +101,7 @@ async def seed(redis: RedisDep) -> dict:
         json.dumps(
             {
                 "type": "leaderboard.seeded",
+                "quizId": DEFAULT_QUIZ_ID,
                 "players": len(DEMO_PLAYERS),
                 "weekKey": week_key,
                 "updatedAt": datetime.now(UTC).isoformat(),
@@ -109,6 +112,6 @@ async def seed(redis: RedisDep) -> dict:
     return {
         "status": "ok",
         "players": len(DEMO_PLAYERS),
-        "globalKey": GLOBAL_LEADERBOARD_KEY,
+        "globalKey": global_key,
         "weeklyKey": week_key,
     }
