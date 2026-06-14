@@ -16,9 +16,24 @@ type Props = {
   onCreate: (payload: QuizCreate) => Promise<void>;
 };
 
+function createDraftQuestionId() {
+  const randomUUID = globalThis.crypto?.randomUUID;
+  if (randomUUID) {
+    return randomUUID.call(globalThis.crypto);
+  }
+
+  const randomValues = new Uint32Array(4);
+  globalThis.crypto?.getRandomValues?.(randomValues);
+  const randomPart = Array.from(randomValues, (value) => value.toString(36)).join(
+    "-",
+  );
+
+  return `draft-${Date.now().toString(36)}-${randomPart || Math.random().toString(36).slice(2)}`;
+}
+
 function createDraftQuestion(): DraftQuestion {
   return {
-    id: crypto.randomUUID(),
+    id: createDraftQuestionId(),
     text: "",
     options: ["", ""],
     correctOptionIndex: 0,
@@ -143,7 +158,7 @@ export function QuizCreator({ onCancel, onCreate }: Props) {
               maxLength={80}
               minLength={2}
               onChange={(event) => setTitle(event.target.value)}
-              placeholder="Np. Bazy danych"
+              placeholder="Tytuł quizu"
               value={title}
             />
           </label>
