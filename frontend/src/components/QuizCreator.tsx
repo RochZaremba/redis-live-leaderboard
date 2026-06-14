@@ -162,7 +162,12 @@ export function QuizCreator({ onCancel, onCreate }: Props) {
           {questions.map((question, questionIndex) => (
             <section className="questionBuilder" key={question.id}>
               <div className="questionBuilderHeader">
-                <strong>Pytanie {questionIndex + 1}</strong>
+                <strong aria-label={`Pytanie ${questionIndex + 1}`}>
+                  <span className="questionIndexBadge" aria-hidden="true">
+                    {questionIndex + 1}
+                  </span>
+                  Pytanie
+                </strong>
                 {questions.length > 1 ? (
                   <button
                     className="iconTextButton dangerText"
@@ -199,6 +204,7 @@ export function QuizCreator({ onCancel, onCreate }: Props) {
                   <div className="optionBuilder" key={`${question.id}-${optionIndex}`}>
                     <label className="correctOptionControl">
                       <input
+                        aria-label={`Opcja ${optionIndex + 1} jest poprawna`}
                         checked={question.correctOptionIndex === optionIndex}
                         name={`correct-${question.id}`}
                         onChange={() =>
@@ -278,7 +284,11 @@ export function QuizCreator({ onCancel, onCreate }: Props) {
           </button>
           <div className="saveQuizArea">
             {validation ? <span className="formHint">{validation}</span> : null}
-            <button className="primaryButton" disabled={saving || !!validation}>
+            <button
+              className="primaryButton"
+              disabled={saving || !!validation}
+              type="submit"
+            >
               <Save size={16} aria-hidden="true" />
               Zapisz quiz
             </button>

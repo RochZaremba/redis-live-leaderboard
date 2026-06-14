@@ -64,6 +64,10 @@ export function QuestionCard({
   const answeredCount =
     answeredQuestionCount +
     (result && question && !answeredIds.has(question.id) ? 1 : 0);
+  const progressPercent =
+    questions.length > 0
+      ? Math.min(100, Math.round((answeredCount / questions.length) * 100))
+      : 0;
 
   async function submit(answer: string) {
     if (!question || disabled || submitting || answeredCurrentQuestion || result) {
@@ -139,8 +143,15 @@ export function QuestionCard({
         </div>
       </div>
 
+      <div
+        aria-label={`Postęp ${answeredCount} z ${questions.length}`}
+        className="questionProgress"
+      >
+        <span style={{ width: `${progressPercent}%` }} />
+      </div>
+
       <div className="answers">
-        {question.options.map((option) => (
+        {question.options.map((option, optionIndex) => (
           <button
             className={selected === option ? "answerButton selected" : "answerButton"}
             disabled={disabled || submitting || answeredCurrentQuestion || !!result}
@@ -148,8 +159,11 @@ export function QuestionCard({
             onClick={() => submit(option)}
             type="button"
           >
-            <Send size={15} aria-hidden="true" />
+            <span className="answerKey" aria-hidden="true">
+              {String.fromCharCode(65 + optionIndex)}
+            </span>
             {option}
+            <Send className="answerSendIcon" size={15} aria-hidden="true" />
           </button>
         ))}
       </div>

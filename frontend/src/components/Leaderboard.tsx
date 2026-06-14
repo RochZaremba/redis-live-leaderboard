@@ -1,6 +1,7 @@
 import { Trophy } from "lucide-react";
 
 import type { LeaderboardResponse } from "../api/client";
+import { AvatarIcon } from "./AvatarIcon";
 
 type Props = {
   title: string;
@@ -23,18 +24,26 @@ export function Leaderboard({ title, leaderboard }: Props) {
       <div className="leaderboardRows">
         {leaderboard?.entries.length ? (
           leaderboard.entries.map((entry) => (
-            <div className="leaderboardRow" key={entry.playerId}>
-              <span className="rank">#{entry.rank}</span>
-              <span className="avatar">{entry.avatar}</span>
-              <span className="nick">{entry.nick}</span>
-              <strong>{entry.score} pkt</strong>
+            <div
+              className={`leaderboardRow rank-${entry.rank <= 3 ? entry.rank : "default"}`}
+              key={entry.playerId}
+            >
+              <span aria-label={`Miejsce ${entry.rank}`} className="rank">
+                #{entry.rank}
+              </span>
+              <span className="leaderboardIdentity">
+                <AvatarIcon className="avatar" decorative value={entry.avatar} />
+                <span className="nick">{entry.nick}</span>
+              </span>
+              <strong className="scorePill">{entry.score} pkt</strong>
             </div>
           ))
         ) : (
-          <div className="emptyState">Brak wyników</div>
+          <div className="emptyState" role="status">
+            Brak wyników
+          </div>
         )}
       </div>
     </section>
   );
 }
-

@@ -2,6 +2,8 @@ import { UserPlus } from "lucide-react";
 import { FormEvent, useState } from "react";
 
 import type { PlayerProfile, PlayerRank } from "../api/client";
+import { AvatarIcon, avatarOptions } from "./AvatarIcon";
+import { AvatarPicker } from "./AvatarPicker";
 
 type Props = {
   player: PlayerProfile | null;
@@ -9,11 +11,9 @@ type Props = {
   onCreate: (nick: string, avatar: string) => Promise<void>;
 };
 
-const avatars = ["rocket", "bolt", "star", "diamond"];
-
 export function PlayerPanel({ player, rank, onCreate }: Props) {
   const [nick, setNick] = useState("");
-  const [avatar, setAvatar] = useState(avatars[0]);
+  const [avatar, setAvatar] = useState(avatarOptions[0].value);
   const [creating, setCreating] = useState(false);
 
   async function handleSubmit(event: FormEvent) {
@@ -45,13 +45,7 @@ export function PlayerPanel({ player, rank, onCreate }: Props) {
           minLength={2}
           maxLength={32}
         />
-        <select value={avatar} onChange={(event) => setAvatar(event.target.value)}>
-          {avatars.map((item) => (
-            <option key={item} value={item}>
-              {item}
-            </option>
-          ))}
-        </select>
+        <AvatarPicker onChange={setAvatar} value={avatar} />
         <button className="primaryButton" disabled={creating || !nick.trim()}>
           <UserPlus size={16} aria-hidden="true" />
           Utwórz
@@ -62,7 +56,10 @@ export function PlayerPanel({ player, rank, onCreate }: Props) {
         <div className="profileStats">
           <div>
             <span className="muted">Nick</span>
-            <strong>{player.nick}</strong>
+            <strong className="playerStatIdentity">
+              <AvatarIcon decorative size={16} value={player.avatar} />
+              {player.nick}
+            </strong>
           </div>
           <div>
             <span className="muted">Punkty</span>

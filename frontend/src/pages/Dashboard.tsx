@@ -308,9 +308,14 @@ export function Dashboard() {
   return (
     <main className="appShell">
       <header className="topBar">
-        <div>
-          <p className="eyebrow">Redis + FastAPI + WebSocket</p>
-          <h1>Quiz Leaderboard</h1>
+        <div className="brandLockup">
+          <span className="brandMark" aria-hidden="true">
+            <Database size={23} />
+          </span>
+          <div>
+            <p className="eyebrow">Redis + FastAPI + WebSocket</p>
+            <h1>Quiz Leaderboard</h1>
+          </div>
         </div>
         <div className="topActions">
           {player ? (
@@ -319,7 +324,10 @@ export function Dashboard() {
               {player.nick}
             </span>
           ) : null}
-          <span className={socketConnected ? "status online" : "status offline"}>
+          <span
+            aria-live="polite"
+            className={socketConnected ? "status online" : "status offline"}
+          >
             {socketConnected ? (
               <Wifi size={16} aria-hidden="true" />
             ) : (
@@ -338,7 +346,11 @@ export function Dashboard() {
         </div>
       </header>
 
-      {error ? <div className="errorBanner">{error}</div> : null}
+      {error ? (
+        <div className="errorBanner" role="alert">
+          {error}
+        </div>
+      ) : null}
 
       {page === "profile" ? <AccountSetup onCreate={handleCreatePlayer} /> : null}
 
