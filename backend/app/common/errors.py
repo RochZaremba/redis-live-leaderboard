@@ -16,6 +16,11 @@ class NotFoundError(AppError):
     code = "not_found"
 
 
+class ConflictError(AppError):
+    status_code = 409
+    code = "conflict"
+
+
 class ValidationAppError(AppError):
     status_code = 422
     code = "validation_error"
@@ -28,4 +33,3 @@ def install_exception_handlers(app: FastAPI) -> None:
             status_code=exc.status_code,
             content={"detail": exc.message, "code": exc.code},
         )
-

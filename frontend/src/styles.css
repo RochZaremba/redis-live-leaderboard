@@ -260,8 +260,27 @@ select {
   color: #a12828;
 }
 
+.answerError {
+  background: #fff1f1;
+  border: 1px solid #f2b8b8;
+  border-radius: 8px;
+  color: #a12828;
+  font-weight: 700;
+  margin-top: 12px;
+  padding: 10px 12px;
+}
+
 .answerResult span {
   display: block;
+}
+
+.quizComplete {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  color: #344256;
+  line-height: 1.5;
+  padding: 14px;
 }
 
 .leaderboardRows,
@@ -379,4 +398,3 @@ select {
     justify-content: center;
   }
 }
-

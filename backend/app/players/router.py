@@ -5,8 +5,13 @@ from redis.asyncio import Redis
 
 from app.core.redis_client import get_redis
 from app.leaderboard.service import get_player_rank
-from app.players.schemas import PlayerCreate, PlayerProfile, PlayerRankResponse
-from app.players.service import create_player, get_player
+from app.players.schemas import (
+    PlayerAnswersResponse,
+    PlayerCreate,
+    PlayerProfile,
+    PlayerRankResponse,
+)
+from app.players.service import create_player, get_answered_question_ids, get_player
 
 router = APIRouter(prefix="/players", tags=["players"])
 RedisDep = Annotated[Redis, Depends(get_redis)]
@@ -34,3 +39,14 @@ async def get_player_rank_endpoint(
     redis: RedisDep,
 ) -> PlayerRankResponse:
     return await get_player_rank(redis, player_id)
+
+
+@router.get("/{player_id}/answers", response_model=PlayerAnswersResponse)
+async def get_player_answers_endpoint(
+    player_id: str,
+    redis: RedisDep,
+) -> PlayerAnswersResponse:
+    return PlayerAnswersResponse(
+        playerId=player_id,
+        answeredQuestionIds=await get_answered_question_ids(redis, player_id),
+    )

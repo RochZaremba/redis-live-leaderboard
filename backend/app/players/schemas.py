@@ -24,3 +24,7 @@ class PlayerRankResponse(BaseModel):
     weeklyScore: int
     weekKey: str
 
+
+class PlayerAnswersResponse(BaseModel):
+    playerId: str
+    answeredQuestionIds: list[str]

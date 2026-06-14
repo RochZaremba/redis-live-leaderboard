@@ -14,6 +14,10 @@ def game_history_key(player_id: str) -> str:
     return f"player:{player_id}:games"
 
 
+def answered_questions_key(player_id: str) -> str:
+    return f"player:{player_id}:answered_questions"
+
+
 def profile_from_hash(raw: dict[str, str]) -> PlayerProfile:
     if not raw:
         raise NotFoundError("Player not found")
@@ -46,3 +50,7 @@ async def create_player(redis: Redis, payload: PlayerCreate) -> PlayerProfile:
 async def get_player(redis: Redis, player_id: str) -> PlayerProfile:
     return profile_from_hash(await redis.hgetall(player_key(player_id)))
 
+
+async def get_answered_question_ids(redis: Redis, player_id: str) -> list[str]:
+    await get_player(redis, player_id)
+    return sorted(await redis.smembers(answered_questions_key(player_id)))

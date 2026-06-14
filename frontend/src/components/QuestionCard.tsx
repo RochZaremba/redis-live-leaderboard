@@ -1,44 +1,122 @@
 import { CheckCircle, Send, XCircle } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import type { AnswerResult, Question } from "../api/client";
 
 type Props = {
+  answeredQuestionIds: string[];
   questions: Question[];
   disabled: boolean;
   onAnswer: (questionId: string, answer: string) => Promise<AnswerResult>;
+  playerId: string | null;
 };
 
-export function QuestionCard({ questions, disabled, onAnswer }: Props) {
+function firstUnansweredIndex(questions: Question[], answeredIds: Set<string>) {
+  const index = questions.findIndex((question) => !answeredIds.has(question.id));
+  return index === -1 ? 0 : index;
+}
+
+export function QuestionCard({
+  answeredQuestionIds,
+  questions,
+  disabled,
+  onAnswer,
+  playerId,
+}: Props) {
   const [questionIndex, setQuestionIndex] = useState(0);
   const [selected, setSelected] = useState("");
   const [result, setResult] = useState<AnswerResult | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [completed, setCompleted] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+
+  const answeredIds = useMemo(
+    () => new Set(answeredQuestionIds),
+    [answeredQuestionIds],
+  );
+  const answeredQuestionCount = questions.filter((item) =>
+    answeredIds.has(item.id),
+  ).length;
+
+  useEffect(() => {
+    if (submitting || result) {
+      return;
+    }
+
+    setSelected("");
+    setResult(null);
+    setSubmitError(null);
+    setCompleted(
+      questions.length > 0 &&
+        questions.every((item) => answeredIds.has(item.id)),
+    );
+    setQuestionIndex(firstUnansweredIndex(questions, answeredIds));
+  }, [answeredIds, playerId, questions, result, submitting]);
 
   const question = questions[questionIndex];
+  const answeredCurrentQuestion = question ? answeredIds.has(question.id) : false;
+  const answeredCount =
+    answeredQuestionCount +
+    (result && question && !answeredIds.has(question.id) ? 1 : 0);
 
   async function submit(answer: string) {
-    if (!question || disabled) return;
+    if (!question || disabled || submitting || answeredCurrentQuestion || result) {
+      return;
+    }
     setSelected(answer);
     setSubmitting(true);
+    setSubmitError(null);
     try {
       const nextResult = await onAnswer(question.id, answer);
       setResult(nextResult);
+    } catch (error) {
+      setSelected("");
+      setSubmitError(
+        error instanceof Error ? error.message : "Nie udało się wysłać odpowiedzi",
+      );
     } finally {
       setSubmitting(false);
     }
   }
 
   function nextQuestion() {
+    const remainingQuestionIndex = questions.findIndex(
+      (item, index) => index > questionIndex && !answeredIds.has(item.id),
+    );
+
     setSelected("");
     setResult(null);
-    setQuestionIndex((current) => (current + 1) % questions.length);
+    setSubmitError(null);
+
+    if (remainingQuestionIndex === -1) {
+      setCompleted(true);
+      return;
+    }
+
+    setQuestionIndex(remainingQuestionIndex);
   }
 
   if (!question) {
     return (
       <section className="panel">
         <div className="emptyState">Brak pytań</div>
+      </section>
+    );
+  }
+
+  if (completed) {
+    return (
+      <section className="panel quizPanel">
+        <div className="panelHeader">
+          <div>
+            <span className="muted">Quiz zakończony</span>
+            <h2>Wszystkie pytania zostały rozwiązane</h2>
+          </div>
+        </div>
+        <div className="quizComplete">
+          Odpowiedziano na {answeredQuestionCount}/
+          {questions.length} pytań. Użyj Reset, jeśli chcesz wyczyścić demo i zacząć od nowa.
+        </div>
       </section>
     );
   }
@@ -56,7 +134,7 @@ export function QuestionCard({ questions, disabled, onAnswer }: Props) {
         {question.options.map((option) => (
           <button
             className={selected === option ? "answerButton selected" : "answerButton"}
-            disabled={disabled || submitting}
+            disabled={disabled || submitting || answeredCurrentQuestion || !!result}
             key={option}
             onClick={() => submit(option)}
             type="button"
@@ -81,11 +159,12 @@ export function QuestionCard({ questions, disabled, onAnswer }: Props) {
             <span>{result.explanation}</span>
           </div>
           <button className="ghostButton" onClick={nextQuestion} type="button">
-            Następne
+            {answeredCount >= questions.length ? "Zakończ" : "Następne"}
           </button>
         </div>
       ) : null}
+
+      {submitError ? <div className="answerError">{submitError}</div> : null}
     </section>
   );
 }
-

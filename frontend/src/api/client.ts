@@ -17,6 +17,11 @@ export type PlayerRank = {
   weekKey: string;
 };
 
+export type PlayerAnswers = {
+  playerId: string;
+  answeredQuestionIds: string[];
+};
+
 export type Question = {
   id: string;
   text: string;
@@ -85,6 +90,10 @@ export function getPlayerRank(playerId: string) {
   return request<PlayerRank>(`/api/players/${playerId}/rank`);
 }
 
+export function getPlayerAnswers(playerId: string) {
+  return request<PlayerAnswers>(`/api/players/${playerId}/answers`);
+}
+
 export function getQuestions() {
   return request<Question[]>("/api/questions");
 }
@@ -120,4 +129,3 @@ export function resetDemo() {
     method: "POST",
   });
 }
-

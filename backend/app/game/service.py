@@ -3,10 +3,16 @@ from datetime import UTC, datetime
 
 from redis.asyncio import Redis
 
+from app.common.errors import ConflictError
 from app.game.questions import QUESTIONS, get_question, is_answer_correct
 from app.game.schemas import AnswerRequest, AnswerResult, QuestionOut
 from app.leaderboard.service import add_score, get_player_rank
-from app.players.service import game_history_key, get_player, player_key
+from app.players.service import (
+    answered_questions_key,
+    game_history_key,
+    get_player,
+    player_key,
+)
 
 POINTS_FOR_CORRECT_ANSWER = 100
 GAME_HISTORY_LIMIT = 10
@@ -27,6 +33,15 @@ def score_answer(correct: bool) -> int:
 async def answer_question(redis: Redis, payload: AnswerRequest) -> AnswerResult:
     await get_player(redis, payload.playerId)
     question = get_question(payload.questionId)
+
+    added = await redis.sadd(answered_questions_key(payload.playerId), question.id)
+    if not added:
+        raise ConflictError("Question already answered")
+    await redis.expire(
+        answered_questions_key(payload.playerId),
+        GAME_HISTORY_TTL_SECONDS,
+    )
+
     correct = is_answer_correct(question, payload.answer)
     points = score_answer(correct)
 

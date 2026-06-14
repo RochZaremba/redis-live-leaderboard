@@ -9,6 +9,7 @@ import {
   Question,
   createPlayer,
   getGlobalLeaderboard,
+  getPlayerAnswers,
   getPlayer,
   getPlayerRank,
   getQuestions,
@@ -35,6 +36,7 @@ export function Dashboard() {
     useState<LeaderboardResponse | null>(null);
   const [weeklyLeaderboard, setWeeklyLeaderboard] =
     useState<LeaderboardResponse | null>(null);
+  const [answeredQuestionIds, setAnsweredQuestionIds] = useState<string[]>([]);
   const [socketConnected, setSocketConnected] = useState(false);
   const [events, setEvents] = useState<LeaderboardSocketEvent[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -49,12 +51,14 @@ export function Dashboard() {
   }, []);
 
   const refreshPlayer = useCallback(async (playerId: string) => {
-    const [profile, playerRank] = await Promise.all([
+    const [profile, playerRank, answers] = await Promise.all([
       getPlayer(playerId),
       getPlayerRank(playerId),
+      getPlayerAnswers(playerId),
     ]);
     setPlayer(profile);
     setRank(playerRank);
+    setAnsweredQuestionIds(answers.answeredQuestionIds);
   }, []);
 
   useEffect(() => {
@@ -92,6 +96,7 @@ export function Dashboard() {
     localStorage.setItem(storedPlayerKey, profile.id);
     setPlayer(profile);
     setRank(await getPlayerRank(profile.id));
+    setAnsweredQuestionIds([]);
   }
 
   async function handleAnswer(questionId: string, answer: string): Promise<AnswerResult> {
@@ -99,12 +104,20 @@ export function Dashboard() {
       throw new Error("Player is required");
     }
     const result = await submitAnswer(player.id, questionId, answer);
+    setAnsweredQuestionIds((current) =>
+      current.includes(questionId) ? current : [...current, questionId],
+    );
     await Promise.all([refreshPlayer(player.id), refreshLeaderboards()]);
     return result;
   }
 
   async function handleSeed() {
     await seedDemo();
+    localStorage.removeItem(storedPlayerKey);
+    setPlayer(null);
+    setRank(null);
+    setAnsweredQuestionIds([]);
+    setEvents([]);
     await refreshLeaderboards();
   }
 
@@ -113,6 +126,7 @@ export function Dashboard() {
     localStorage.removeItem(storedPlayerKey);
     setPlayer(null);
     setRank(null);
+    setAnsweredQuestionIds([]);
     setEvents([]);
     await refreshLeaderboards();
   }
@@ -155,8 +169,10 @@ export function Dashboard() {
         <div className="leftColumn">
           <PlayerPanel player={player} rank={rank} onCreate={handleCreatePlayer} />
           <QuestionCard
+            answeredQuestionIds={answeredQuestionIds}
             disabled={!player}
             onAnswer={handleAnswer}
+            playerId={player?.id ?? null}
             questions={questions}
           />
         </div>
@@ -192,4 +208,3 @@ export function Dashboard() {
     </main>
   );
 }
-
