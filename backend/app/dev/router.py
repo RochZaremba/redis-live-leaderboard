@@ -75,7 +75,6 @@ async def reset(redis: RedisDep) -> dict:
 
 @router.post("/seed")
 async def seed(redis: RedisDep) -> dict:
-    await reset(redis)
     week_key = current_week_key(quiz_id=DEFAULT_QUIZ_ID)
     global_key = global_leaderboard_key(DEFAULT_QUIZ_ID)
 

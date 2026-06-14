@@ -276,16 +276,15 @@ export function Dashboard() {
 
   async function handleSeed() {
     await seedDemo();
-    localStorage.removeItem(storedPlayerKey);
-    setPlayer(null);
-    setProgressByQuizId({});
-    setAnsweredQuestionIds([]);
-    setResultRank(null);
-    setPreviewQuizId(null);
-    setPreviewLeaderboard(null);
-    setSelectedQuizId(defaultQuizId);
-    await refreshQuizzes(null);
-    setPage("profile");
+    await refreshQuizzes(player);
+
+    if (previewQuizId) {
+      previewQuizLeaderboard(previewQuizId);
+    }
+
+    if (page === "result") {
+      await loadQuizState(selectedQuizId);
+    }
   }
 
   async function handleReset() {
