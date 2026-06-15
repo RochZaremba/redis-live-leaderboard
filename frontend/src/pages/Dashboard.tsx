@@ -1,9 +1,10 @@
 import {
   ArrowLeft,
   Database,
-  RotateCcw,
+  ExternalLink,
   Trophy,
   User,
+  UserPlus,
   Wifi,
   WifiOff,
 } from "lucide-react";
@@ -26,7 +27,6 @@ import {
   getQuestions,
   getQuizzes,
   getWeeklyLeaderboard,
-  resetDemo,
   seedDemo,
   submitAnswer,
 } from "../api/client";
@@ -350,16 +350,12 @@ export function Dashboard() {
     }
   }
 
-  async function handleReset() {
-    await resetDemo();
+  function handleNewPlayer() {
     localStorage.removeItem(storedPlayerKey);
     setPlayer(null);
     setProgressByQuizId({});
     setAnsweredQuestionIds([]);
     setResultRank(null);
-    setPreviewQuizId(null);
-    setPreviewLeaderboard(null);
-    await refreshQuizzes(null);
     setPage("profile");
   }
 
@@ -398,14 +394,25 @@ export function Dashboard() {
             )}
             {liveStatus}
           </span>
+          <a
+            className="ghostButton"
+            href="/leaderboard"
+            rel="noopener noreferrer"
+            target="_blank"
+          >
+            <ExternalLink size={16} aria-hidden="true" />
+            Leaderboard
+          </a>
           <button className="ghostButton" onClick={handleSeed} type="button">
             <Database size={16} aria-hidden="true" />
             Seed
           </button>
-          <button className="dangerButton" onClick={handleReset} type="button">
-            <RotateCcw size={16} aria-hidden="true" />
-            Reset
-          </button>
+          {player ? (
+            <button className="ghostButton" onClick={handleNewPlayer} type="button">
+              <UserPlus size={16} aria-hidden="true" />
+              Nowy gracz
+            </button>
+          ) : null}
         </div>
       </header>
 
