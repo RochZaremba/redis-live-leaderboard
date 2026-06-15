@@ -1,4 +1,5 @@
 import asyncio
+import logging
 from contextlib import asynccontextmanager, suppress
 from typing import Annotated
 
@@ -19,12 +20,26 @@ from app.websocket.router import router as websocket_router
 
 settings = get_settings()
 RedisDep = Annotated[Redis, Depends(get_redis)]
+logger = logging.getLogger(__name__)
+
+
+def log_pubsub_task_result(task: asyncio.Task[None]) -> None:
+    with suppress(asyncio.CancelledError):
+        exception = task.exception()
+        if exception:
+            logger.error(
+                "Redis leaderboard Pub/Sub task stopped unexpectedly",
+                exc_info=(type(exception), exception, exception.__traceback__),
+            )
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    redis = await init_redis(settings)
-    app.state.pubsub_task = asyncio.create_task(forward_redis_updates(redis))
+    await init_redis(settings)
+    app.state.pubsub_task = asyncio.create_task(
+        forward_redis_updates(settings.redis_url),
+    )
+    app.state.pubsub_task.add_done_callback(log_pubsub_task_result)
     yield
     app.state.pubsub_task.cancel()
     with suppress(asyncio.CancelledError):

@@ -66,6 +66,12 @@ export function Dashboard() {
   const [resultRank, setResultRank] = useState<PlayerRank | null>(null);
   const [socketConnected, setSocketConnected] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const liveStateRef = useRef({
+    page,
+    player,
+    previewQuizId,
+    selectedQuizId,
+  });
 
   const selectedQuiz = useMemo(
     () => quizzes.find((quiz) => quiz.id === selectedQuizId) ?? null,
@@ -164,6 +170,29 @@ export function Dashboard() {
       });
   }, []);
 
+  const liveHandlersRef = useRef({
+    loadQuizState,
+    previewQuizLeaderboard,
+    refreshQuizzes,
+  });
+
+  useEffect(() => {
+    liveStateRef.current = {
+      page,
+      player,
+      previewQuizId,
+      selectedQuizId,
+    };
+  }, [page, player, previewQuizId, selectedQuizId]);
+
+  useEffect(() => {
+    liveHandlersRef.current = {
+      loadQuizState,
+      previewQuizLeaderboard,
+      refreshQuizzes,
+    };
+  }, [loadQuizState, previewQuizLeaderboard, refreshQuizzes]);
+
   useEffect(() => {
     async function boot() {
       try {
@@ -185,35 +214,69 @@ export function Dashboard() {
   }, [refreshQuizzes]);
 
   useEffect(() => {
-    const socket = connectLeaderboardSocket(
-      (event: LeaderboardSocketEvent) => {
-        if (event.type === "connection.ready") return;
+    let reconnectId: number | null = null;
+    let socket: WebSocket | null = null;
+    let stopped = false;
 
-        if (player) {
-          refreshQuizzes(player).catch((err: Error) => setError(err.message));
-        }
-        if (event.quizId && event.quizId === previewQuizId && page === "quizzes") {
-          previewQuizLeaderboard(event.quizId);
-        }
-        if (event.quizId === selectedQuizId && page === "result") {
-          loadQuizState(selectedQuizId).catch((err: Error) =>
-            setError(err.message),
-          );
-        }
-      },
-      setSocketConnected,
-    );
+    function clearReconnect() {
+      if (reconnectId !== null) {
+        window.clearTimeout(reconnectId);
+        reconnectId = null;
+      }
+    }
 
-    return () => socket.close();
-  }, [
-    loadQuizState,
-    page,
-    player,
-    previewQuizId,
-    previewQuizLeaderboard,
-    refreshQuizzes,
-    selectedQuizId,
-  ]);
+    function scheduleReconnect() {
+      if (stopped || reconnectId !== null) return;
+
+      reconnectId = window.setTimeout(() => {
+        reconnectId = null;
+        connect();
+      }, 1000);
+    }
+
+    function handleMessage(event: LeaderboardSocketEvent) {
+      if (event.type === "connection.ready") return;
+
+      const { page, player, previewQuizId, selectedQuizId } =
+        liveStateRef.current;
+      const { loadQuizState, previewQuizLeaderboard, refreshQuizzes } =
+        liveHandlersRef.current;
+
+      if (player) {
+        refreshQuizzes(player).catch((err: Error) => setError(err.message));
+      }
+      if (event.quizId && event.quizId === previewQuizId && page === "quizzes") {
+        previewQuizLeaderboard(event.quizId);
+      }
+      if (event.quizId === selectedQuizId && page === "result") {
+        loadQuizState(selectedQuizId).catch((err: Error) =>
+          setError(err.message),
+        );
+      }
+    }
+
+    function handleStatusChange(connected: boolean) {
+      setSocketConnected(connected);
+      if (connected) {
+        clearReconnect();
+        return;
+      }
+
+      scheduleReconnect();
+    }
+
+    function connect() {
+      socket = connectLeaderboardSocket(handleMessage, handleStatusChange);
+    }
+
+    connect();
+
+    return () => {
+      stopped = true;
+      clearReconnect();
+      socket?.close();
+    };
+  }, []);
 
   async function handleCreatePlayer(nick: string, avatar: string) {
     const profile = await createPlayer(nick, avatar);

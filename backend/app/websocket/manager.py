@@ -1,5 +1,5 @@
 from fastapi import WebSocket
-from starlette.websockets import WebSocketState
+from starlette.websockets import WebSocketDisconnect, WebSocketState
 
 
 class ConnectionManager:
@@ -21,9 +21,8 @@ class ConnectionManager:
                 continue
             try:
                 await connection.send_json(payload)
-            except RuntimeError:
+            except (RuntimeError, WebSocketDisconnect):
                 stale.append(connection)
 
         for connection in stale:
             self.disconnect(connection)
-

@@ -23,7 +23,7 @@ Jak wejdziesz przez klienta `redis-cli -p 6380`, to sprawdzisz topkę w ten spos
 ZREVRANGE leaderboard:global 0 9 WITHSCORES
 ```
 
-A jak chcesz sprawdzić detale jakiegoś ziomka to:
+A jak chcesz sprawdzić detale jakiegoś gracza to:
 ```bash
 HGETALL player:id_gracza
 ```
