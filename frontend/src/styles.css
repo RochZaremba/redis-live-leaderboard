@@ -1232,8 +1232,40 @@ input::placeholder {
   gap: var(--space-4);
   grid-template-columns: 80px minmax(0, 1fr) auto;
   min-height: 72px;
+  overflow: visible;
   padding: var(--space-3) var(--space-5);
-  transition: transform 240ms ease, box-shadow 240ms ease;
+  position: relative;
+  transition: box-shadow 240ms ease;
+}
+
+.confettiContainer {
+  inset: 0;
+  overflow: visible;
+  pointer-events: none;
+  position: absolute;
+  z-index: 10;
+}
+
+.confettiPiece {
+  animation: confettiBurst 1.8s ease-out forwards;
+  border-radius: 2px;
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+
+@keyframes confettiBurst {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, -50%) translate(0, 0) rotate(0deg) scale(1);
+  }
+  75% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) translate(var(--cx), var(--cy)) rotate(var(--cr)) scale(0.5);
+  }
 }
 
 .lbDisplayRow.rank-1 {

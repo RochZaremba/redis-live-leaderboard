@@ -1,5 +1,5 @@
 import { Database, Trophy, Wifi, WifiOff } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
 import {
   LeaderboardResponse,
@@ -13,12 +13,43 @@ import {
   connectLeaderboardSocket,
 } from "../socket/leaderboardSocket";
 
+const CONFETTI_COLORS = ["#facc15", "#f97316", "#22c55e", "#3b82f6", "#a855f7", "#ec4899"];
+const CONFETTI_COUNT = 28;
+
+interface ConfettiPiece {
+  id: number;
+  color: string;
+  left: number;
+  cx: number;
+  cy: number;
+  cr: number;
+  size: number;
+  delay: number;
+}
+
+function makeConfetti(): ConfettiPiece[] {
+  return Array.from({ length: CONFETTI_COUNT }, (_, i) => ({
+    id: i,
+    color: CONFETTI_COLORS[i % CONFETTI_COLORS.length],
+    left: 10 + Math.random() * 80,
+    cx: Math.random() * 160 - 80,
+    cy: -(60 + Math.random() * 100),
+    cr: Math.random() * 720 - 360,
+    size: Math.random() * 8 + 6,
+    delay: Math.random() * 0.35,
+  }));
+}
+
 export function LeaderboardDisplay() {
   const [quizzes, setQuizzes] = useState<QuizSummary[]>([]);
   const [selectedQuizId, setSelectedQuizId] = useState<string | null>(null);
   const [leaderboard, setLeaderboard] = useState<LeaderboardResponse | null>(null);
   const [socketConnected, setSocketConnected] = useState(false);
+  const [confetti, setConfetti] = useState<ConfettiPiece[] | null>(null);
   const liveQuizIdRef = useRef<string | null>(null);
+  const prevPositionsRef = useRef<Map<string, number>>(new Map());
+  const prevRank1IdRef = useRef<string | null>(null);
+  const rowsRef = useRef<Map<string, HTMLDivElement>>(new Map());
 
   function fetchLeaderboard(quizId: string) {
     getGlobalLeaderboard(20, quizId)
@@ -83,6 +114,75 @@ export function LeaderboardDisplay() {
     };
   }, []);
 
+  // Auto-clear confetti after animation completes
+  useEffect(() => {
+    if (!confetti) return;
+    const t = setTimeout(() => setConfetti(null), 2400);
+    return () => clearTimeout(t);
+  }, [confetti]);
+
+  // FLIP animation + rank-1 detection (runs synchronously before browser paint)
+  useLayoutEffect(() => {
+    const entries = leaderboard?.entries ?? [];
+
+    // Disable transition + clear any lingering transforms before measuring
+    entries.forEach((entry) => {
+      const el = rowsRef.current.get(entry.playerId);
+      if (!el) return;
+      el.style.transition = "none";
+      el.style.transform = "";
+    });
+
+    // Force reflow so cleared transforms are committed before we read positions
+    const newPositions = new Map<string, number>();
+    entries.forEach((entry) => {
+      const el = rowsRef.current.get(entry.playerId);
+      if (!el) return;
+      newPositions.set(entry.playerId, el.getBoundingClientRect().top);
+    });
+
+    // Apply inverted transforms so elements appear at their old positions
+    const prevPositions = prevPositionsRef.current;
+    entries.forEach((entry) => {
+      const el = rowsRef.current.get(entry.playerId);
+      if (!el) return;
+      const prevTop = prevPositions.get(entry.playerId);
+      const newTop = newPositions.get(entry.playerId);
+      if (prevTop !== undefined && newTop !== undefined) {
+        const delta = prevTop - newTop;
+        if (Math.abs(delta) > 1) {
+          el.style.transition = "none";
+          el.style.transform = `translateY(${delta}px)`;
+        }
+      }
+    });
+
+    // Store new positions for next update
+    prevPositionsRef.current = newPositions;
+
+    // Double-rAF: first frame commits the inverted positions to the compositor,
+    // second frame sets the transition + clears transforms so the browser animates
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        entries.forEach((entry) => {
+          const el = rowsRef.current.get(entry.playerId);
+          if (!el) return;
+          el.style.transition = "transform 500ms cubic-bezier(0.25, 0.46, 0.45, 0.94)";
+          el.style.transform = "";
+        });
+      });
+    });
+
+    // Detect rank-1 change and trigger confetti
+    const newRank1Id = entries.find((e) => e.rank === 1)?.playerId ?? null;
+    const prevRank1Id = prevRank1IdRef.current;
+    prevRank1IdRef.current = newRank1Id;
+
+    if (newRank1Id && newRank1Id !== prevRank1Id && prevRank1Id !== null) {
+      setConfetti(makeConfetti());
+    }
+  }, [leaderboard]);
+
   const selectedQuiz = quizzes.find((q) => q.id === selectedQuizId);
 
   return (
@@ -133,6 +233,10 @@ export function LeaderboardDisplay() {
             <div
               className={`lbDisplayRow rank-${entry.rank <= 3 ? entry.rank : "default"}`}
               key={entry.playerId}
+              ref={(el) => {
+                if (el) rowsRef.current.set(entry.playerId, el);
+                else rowsRef.current.delete(entry.playerId);
+              }}
             >
               <span aria-label={`Miejsce ${entry.rank}`} className="lbDisplayRank">
                 #{entry.rank}
@@ -146,6 +250,29 @@ export function LeaderboardDisplay() {
                 <span className="nick lbDisplayNick">{entry.nick}</span>
               </span>
               <strong className="scorePill lbDisplayScore">{entry.score} pkt</strong>
+
+              {entry.rank === 1 && confetti ? (
+                <div className="confettiContainer" aria-hidden="true">
+                  {confetti.map((piece) => (
+                    <span
+                      key={piece.id}
+                      className="confettiPiece"
+                      style={
+                        {
+                          backgroundColor: piece.color,
+                          width: piece.size,
+                          height: piece.size,
+                          left: `${piece.left}%`,
+                          "--cx": `${piece.cx}px`,
+                          "--cy": `${piece.cy}px`,
+                          "--cr": `${piece.cr}deg`,
+                          animationDelay: `${piece.delay}s`,
+                        } as React.CSSProperties
+                      }
+                    />
+                  ))}
+                </div>
+              ) : null}
             </div>
           ))
         ) : (
