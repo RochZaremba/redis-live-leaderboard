@@ -74,6 +74,67 @@ DEFAULT_QUESTIONS: list[StoredQuestion] = [
             "PUBLISH wysyła wiadomość na kanał, a SUBSCRIBE pozwala ją odebrać."
         ),
     ),
+    StoredQuestion(
+        id="q-persistence",
+        text="Które mechanizmy trwałości obsługuje Redis?",
+        options=["Tylko RAM", "RDB i AOF", "Tylko SQL", "B-tree"],
+        correct_answer="RDB i AOF",
+        explanation=(
+            "RDB robi snapshoty, AOF zapisuje każdą operację — można używać obu naraz."
+        ),
+    ),
+    StoredQuestion(
+        id="q-zadd",
+        text="Jaka złożoność ma ZADD w Sorted Set?",
+        options=["O(1)", "O(n)", "O(log n)", "O(n²)"],
+        correct_answer="O(log n)",
+        explanation="Sorted Set używa skip listy — ZADD działa w O(log n).",
+    ),
+    StoredQuestion(
+        id="q-expire",
+        text="Która komenda ustawia czas życia klucza Redis w sekundach?",
+        options=["TTL", "EXPIRE", "PERSIST", "TIMEOUT"],
+        correct_answer="EXPIRE",
+        explanation="EXPIRE key seconds — po upływie czasu Redis automatycznie usuwa klucz.",
+    ),
+    StoredQuestion(
+        id="q-zrank",
+        text="Co zwraca ZRANK w Sorted Set?",
+        options=["Wynik (score)", "Pozycję (0-indexed)", "Liczbę elementów", "Klucz"],
+        correct_answer="Pozycję (0-indexed)",
+        explanation="ZRANK zwraca indeks elementu sortowanego od najniższego score — zaczyna od 0.",
+    ),
+    StoredQuestion(
+        id="q-pipeline",
+        text="Po co używa się pipeline w Redis?",
+        options=[
+            "Szyfrowanie danych",
+            "Grupowanie komend w jednym round-trip",
+            "Replikacja master-slave",
+            "Kompresja wartości",
+        ],
+        correct_answer="Grupowanie komend w jednym round-trip",
+        explanation=(
+            "Pipeline wysyła wiele komend naraz bez czekania na odpowiedź po każdej — "
+            "znacznie redukuje latencję."
+        ),
+    ),
+    StoredQuestion(
+        id="q-data-types",
+        text="Który typ Redis przechowuje nieuporządkowane unikalne wartości?",
+        options=["List", "Hash", "Set", "Stream"],
+        correct_answer="Set",
+        explanation="Set to nieuporządkowany zbiór unikalnych stringów — idealny do tagów i zbiorów.",
+    ),
+    StoredQuestion(
+        id="q-cluster",
+        text="Jak Redis Cluster dzieli dane?",
+        options=["Round-robin", "Hashowanie klucza na 16384 sloty", "Losowo", "Alfabetycznie"],
+        correct_answer="Hashowanie klucza na 16384 sloty",
+        explanation=(
+            "Redis Cluster oblicza CRC16(key) % 16384 i przypisuje slot do węzła."
+        ),
+    ),
 ]
 
 

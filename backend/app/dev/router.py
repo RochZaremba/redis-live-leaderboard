@@ -20,37 +20,73 @@ RedisDep = Annotated[Redis, Depends(get_redis)]
 
 DEMO_PLAYERS = [
     {
-        "id": "demo-roch",
-        "nick": "Roch",
+        "id": "demo-aleksandra",
+        "nick": "Aleksandra",
         "avatar": "rocket",
-        "score": 500,
-        "gamesPlayed": 6,
-        "correctAnswers": 5,
+        "score": 950,
+        "gamesPlayed": 10,
+        "correctAnswers": 9,
         "wrongAnswers": 1,
     },
     {
-        "id": "demo-hubert",
-        "nick": "Hubert",
+        "id": "demo-bartosz",
+        "nick": "Bartosz",
         "avatar": "bolt",
-        "score": 400,
-        "gamesPlayed": 5,
-        "correctAnswers": 4,
+        "score": 820,
+        "gamesPlayed": 9,
+        "correctAnswers": 8,
         "wrongAnswers": 1,
     },
     {
-        "id": "demo-maniek",
-        "nick": "Maniek",
+        "id": "demo-celina",
+        "nick": "Celina",
         "avatar": "star",
-        "score": 300,
+        "score": 700,
+        "gamesPlayed": 8,
+        "correctAnswers": 7,
+        "wrongAnswers": 1,
+    },
+    {
+        "id": "demo-damian",
+        "nick": "Damian",
+        "avatar": "diamond",
+        "score": 610,
+        "gamesPlayed": 8,
+        "correctAnswers": 6,
+        "wrongAnswers": 2,
+    },
+    {
+        "id": "demo-ewelina",
+        "nick": "Ewelina",
+        "avatar": "bolt",
+        "score": 500,
+        "gamesPlayed": 7,
+        "correctAnswers": 5,
+        "wrongAnswers": 2,
+    },
+    {
+        "id": "demo-filip",
+        "nick": "Filip",
+        "avatar": "rocket",
+        "score": 390,
+        "gamesPlayed": 6,
+        "correctAnswers": 4,
+        "wrongAnswers": 2,
+    },
+    {
+        "id": "demo-gabriela",
+        "nick": "Gabriela",
+        "avatar": "diamond",
+        "score": 280,
         "gamesPlayed": 5,
         "correctAnswers": 3,
         "wrongAnswers": 2,
     },
     {
-        "id": "demo-ania",
-        "nick": "Ania",
-        "avatar": "diamond",
-        "score": 200,
+        "id": "demo-hubert",
+        "nick": "Hubert",
+        "avatar": "star",
+        "score": 170,
         "gamesPlayed": 4,
         "correctAnswers": 2,
         "wrongAnswers": 2,
@@ -70,6 +106,18 @@ async def reset(redis: RedisDep) -> dict:
     deleted = 0
     deleted += await _delete_pattern(redis, "player:*")
     deleted += await _delete_pattern(redis, "leaderboard:*")
+    deleted += await _delete_pattern(redis, "quiz:*")
+    deleted += int(await redis.delete("quizzes:index"))
+    await redis.publish(
+        UPDATES_CHANNEL,
+        json.dumps(
+            {
+                "type": "leaderboard.reset",
+                "quizId": DEFAULT_QUIZ_ID,
+                "updatedAt": datetime.now(UTC).isoformat(),
+            }
+        ),
+    )
     return {"status": "ok", "deletedKeys": deleted}
 
 
