@@ -1,11 +1,21 @@
-FROM node:20-alpine
+FROM node:20-alpine AS builder
 
 WORKDIR /app
 
 COPY package.json package-lock.json* ./
-RUN npm install
+RUN npm ci
 
 COPY index.html vite.config.ts tsconfig.json ./
 COPY src ./src
 
-CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
+ARG VITE_API_URL
+ARG VITE_WS_URL
+
+RUN npm run build
+
+FROM caddy:2-alpine
+
+COPY --from=builder /app/dist /usr/share/caddy
+COPY Caddyfile /etc/caddy/Caddyfile
+
+EXPOSE 80

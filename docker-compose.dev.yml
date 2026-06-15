@@ -17,7 +17,7 @@ services:
     container_name: quiz-leaderboard-backend
     environment:
       REDIS_URL: redis://redis:6379/0
-      CORS_ORIGINS: http://localhost:${GATEWAY_PORT:-3000}
+      CORS_ORIGINS: http://localhost:11000
       WEEKLY_LEADERBOARD_TTL_SECONDS: 1209600
     depends_on:
       redis:
@@ -27,7 +27,7 @@ services:
     build:
       context: ./frontend
       args:
-        VITE_API_URL: https://nosql.mateuszmanczak.com
+        VITE_API_URL: http://localhost:11000
     container_name: quiz-leaderboard-frontend
     depends_on:
       - backend
@@ -37,9 +37,9 @@ services:
       context: ./gateway
     container_name: quiz-leaderboard-gateway
     environment:
-      GATEWAY_PORT: ${GATEWAY_PORT:-3000}
+      GATEWAY_PORT: 11000
     ports:
-      - "${GATEWAY_PORT:-3000}:${GATEWAY_PORT:-3000}"
+      - "11000:11000"
     depends_on:
       - backend
       - frontend

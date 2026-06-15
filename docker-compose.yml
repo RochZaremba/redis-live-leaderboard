@@ -31,25 +31,20 @@ services:
   frontend:
     build:
       context: ./frontend
+      args:
+        VITE_API_URL: http://localhost:${GATEWAY_PORT:-3000}
     container_name: quiz-leaderboard-frontend
-    environment:
-      VITE_API_URL: http://localhost:${GATEWAY_PORT:-3000}
-      VITE_WS_URL: ws://localhost:${GATEWAY_PORT:-3000}/ws/leaderboard
     depends_on:
       - backend
-    volumes:
-      - ./frontend/src:/app/src
-      - ./frontend/index.html:/app/index.html
 
   gateway:
-    image: caddy:2-alpine
+    build:
+      context: ./gateway
     container_name: quiz-leaderboard-gateway
     environment:
       GATEWAY_PORT: ${GATEWAY_PORT:-3000}
     ports:
       - "${GATEWAY_PORT:-3000}:${GATEWAY_PORT:-3000}"
-    volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile
     depends_on:
       - backend
       - frontend
