@@ -19,10 +19,8 @@ services:
     container_name: quiz-leaderboard-backend
     environment:
       REDIS_URL: redis://redis:6379/0
-      CORS_ORIGINS: http://localhost:5173
+      CORS_ORIGINS: http://localhost:${GATEWAY_PORT:-3000}
       WEEKLY_LEADERBOARD_TTL_SECONDS: 1209600
-    ports:
-      - "8000:8000"
     depends_on:
       redis:
         condition: service_healthy
@@ -35,15 +33,26 @@ services:
       context: ./frontend
     container_name: quiz-leaderboard-frontend
     environment:
-      VITE_API_URL: http://localhost:8000
-      VITE_WS_URL: ws://localhost:8000/ws/leaderboard
-    ports:
-      - "5173:5173"
+      VITE_API_URL: http://localhost:${GATEWAY_PORT:-3000}
+      VITE_WS_URL: ws://localhost:${GATEWAY_PORT:-3000}/ws/leaderboard
     depends_on:
       - backend
     volumes:
       - ./frontend/src:/app/src
       - ./frontend/index.html:/app/index.html
+
+  gateway:
+    image: caddy:2-alpine
+    container_name: quiz-leaderboard-gateway
+    environment:
+      GATEWAY_PORT: ${GATEWAY_PORT:-3000}
+    ports:
+      - "${GATEWAY_PORT:-3000}:${GATEWAY_PORT:-3000}"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+    depends_on:
+      - backend
+      - frontend
 
 volumes:
   redis-data:
