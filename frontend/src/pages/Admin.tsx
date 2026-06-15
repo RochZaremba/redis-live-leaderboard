@@ -1,15 +1,22 @@
 import { Database, RotateCcw } from "lucide-react";
 import { useState } from "react";
 
-import { resetDemo } from "../api/client";
+import { resetDemo, seedDemo } from "../api/client";
 
 export function Admin() {
-  const [status, setStatus] = useState<string | null>(null);
+  const [resetStatus, setResetStatus] = useState<string | null>(null);
+  const [seedStatus, setSeedStatus] = useState<string | null>(null);
 
   async function handleReset() {
-    setStatus(null);
+    setResetStatus(null);
     const result = await resetDemo();
-    setStatus(`Deleted ${result.deletedKeys} keys`);
+    setResetStatus(`Deleted ${result.deletedKeys} keys`);
+  }
+
+  async function handleSeed() {
+    setSeedStatus(null);
+    await seedDemo();
+    setSeedStatus("Seeded successfully");
   }
 
   return (
@@ -39,7 +46,12 @@ export function Admin() {
               <RotateCcw size={16} aria-hidden="true" />
               Reset Database
             </button>
-            {status ? <span className="status neutral">{status}</span> : null}
+            {resetStatus ? <span className="status neutral">{resetStatus}</span> : null}
+            <button className="ghostButton" onClick={handleSeed} type="button">
+              <Database size={16} aria-hidden="true" />
+              Seed
+            </button>
+            {seedStatus ? <span className="status neutral">{seedStatus}</span> : null}
           </div>
         </section>
       </main>

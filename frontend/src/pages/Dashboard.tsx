@@ -27,7 +27,6 @@ import {
   getQuestions,
   getQuizzes,
   getWeeklyLeaderboard,
-  seedDemo,
   submitAnswer,
 } from "../api/client";
 import { AccountSetup } from "../components/AccountSetup";
@@ -337,19 +336,6 @@ export function Dashboard() {
     return result;
   }
 
-  async function handleSeed() {
-    await seedDemo();
-    await refreshQuizzes(player);
-
-    if (previewQuizId) {
-      previewQuizLeaderboard(previewQuizId);
-    }
-
-    if (page === "result") {
-      await loadQuizState(selectedQuizId);
-    }
-  }
-
   function handleNewPlayer() {
     localStorage.removeItem(storedPlayerKey);
     setPlayer(null);
@@ -403,10 +389,6 @@ export function Dashboard() {
             <ExternalLink size={16} aria-hidden="true" />
             Leaderboard
           </a>
-          <button className="ghostButton" onClick={handleSeed} type="button">
-            <Database size={16} aria-hidden="true" />
-            Seed
-          </button>
           {player ? (
             <button className="ghostButton" onClick={handleNewPlayer} type="button">
               <UserPlus size={16} aria-hidden="true" />
