@@ -133,14 +133,13 @@ button:disabled {
 .topBar {
   align-items: center;
   background: var(--color-surface);
-  border: 1px solid rgba(219, 228, 239, 0.92);
-  border-radius: var(--radius-sm);
+  border-bottom: 1px solid rgba(219, 228, 239, 0.92);
   box-shadow: var(--shadow-md);
   display: grid;
   gap: var(--space-5);
   grid-template-columns: minmax(0, 1fr) auto;
   margin-bottom: var(--space-5);
-  padding: var(--space-4);
+  padding: var(--space-4) calc((100% - min(1180px, calc(100% - 32px))) / 2 + var(--space-4));
 }
 
 .brandLockup {
@@ -1101,7 +1100,10 @@ input::placeholder {
     padding-top: var(--space-4);
   }
 
-  .topBar,
+  .topBar {
+    padding: var(--space-4) calc((100% - min(1180px, 100% - 20px)) / 2 + var(--space-4));
+  }
+
   .panel {
     padding: var(--space-4);
   }

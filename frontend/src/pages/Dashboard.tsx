@@ -365,7 +365,7 @@ export function Dashboard() {
   );
 
   return (
-    <main className="appShell">
+    <>
       <header className="topBar">
         <div className="brandLockup">
           <span className="brandMark" aria-hidden="true">
@@ -415,6 +415,7 @@ export function Dashboard() {
           ) : null}
         </div>
       </header>
+      <main className="appShell">
 
       {error ? (
         <div className="errorBanner" role="alert">
@@ -521,6 +522,7 @@ export function Dashboard() {
           </section>
         </section>
       ) : null}
-    </main>
+      </main>
+    </>
   );
 }
