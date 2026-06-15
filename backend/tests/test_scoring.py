@@ -15,9 +15,9 @@ def test_answer_normalization_ignores_case_and_extra_spaces() -> None:
 
 
 def test_correct_answer_validation() -> None:
-    question = get_question("q-redis-sorted-set")
-    assert is_answer_correct(question, "sorted set") is True
-    assert is_answer_correct(question, "hash") is False
+    question = get_question("q-symbol-au")
+    assert is_answer_correct(question, "złoto") is True
+    assert is_answer_correct(question, "srebro") is False
 
 
 def test_score_answer() -> None:
@@ -34,8 +34,8 @@ async def test_player_cannot_change_wrong_answer_to_score_points() -> None:
         redis,
         AnswerRequest(
             playerId=player.id,
-            questionId="q-redis-sorted-set",
-            answer="Hash",
+            questionId="q-symbol-au",
+            answer="Srebro",
         ),
     )
 
@@ -47,8 +47,8 @@ async def test_player_cannot_change_wrong_answer_to_score_points() -> None:
             redis,
             AnswerRequest(
                 playerId=player.id,
-                questionId="q-redis-sorted-set",
-                answer="Sorted Set",
+                questionId="q-symbol-au",
+                answer="Złoto",
             ),
         )
 
